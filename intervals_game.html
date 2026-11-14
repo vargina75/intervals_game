@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Интервалы и аккорды</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Comic Sans MS", Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
+  .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+  h1 { text-align: center; color: #667eea; margin-bottom: 10px; font-size: 32px; }
+  .subtitle { text-align: center; color: #666; margin-bottom: 25px; font-size: 18px; }
+  .score-board { text-align: center; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 15px; margin-bottom: 20px; color: white; font-size: 20px; font-weight: bold; }
+  .level-info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border-radius: 10px; display: inline-block; margin: 10px; font-weight: bold; }
+  .basket { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center; min-height: 100px; }
+  .basket-title { font-size: 22px; font-weight: bold; margin-bottom: 15px; color: white; }
+  .balls-container { display: flex; gap: 15px; justify-content: center; min-height: 60px; }
+  .ball { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: #667eea; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: bounce 0.6s; }
+  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+  .controls { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 25px 0; }
+  .btn { padding: 15px 30px; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; color: white; transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+  .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+  .btn-full { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .btn-reset { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
+  .btn-next-level { background: linear-gradient(135deg, #2ecc71, #27ae60); margin-top: 15px; display: none; }
+  .zone { background: #f8f9fa; border: 3px dashed #ddd; border-radius: 15px; padding: 25px; margin: 25px 0; min-height: 140px; }
+  .zone-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #667eea; }
+  .interval-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+  .interval-btn { padding: 18px 12px; border: 3px solid #667eea; border-radius: 15px; font-size: 16px; font-weight: bold; cursor: pointer; background: white; color: #667eea; transition: all 0.3s; text-align: center; }
+  .interval-btn:hover { background: #667eea; color: white; transform: scale(1.05); }
+  .interval-btn.correct { background: #2ecc71; border-color: #27ae60; color: white; animation: correctPulse 0.6s; }
+  .interval-btn.wrong { background: #e74c3c; border-color: #c0392b; color: white; animation: shake 0.5s; }
+  @keyframes correctPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+  .feedback { text-align: center; font-size: 24px; font-weight: bold; padding: 20px; margin: 25px 0; border-radius: 15px; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+  .feedback.success { background: linear-gradient(135deg, #d4edda, #c3e6cb); color: #155724; border: 3px solid #28a745; }
+  .feedback.error { background: linear-gradient(135deg, #f8d7da, #f5c6cb); color: #721c24; border: 3px solid #dc3545; }
+  .feedback.info { background: rgba(102, 126, 234, 0.1); color: #667eea; border: 2px solid #667eea; }
+  .hint { text-align: center; color: #666; font-size: 16px; margin-top: 10px; font-style: italic; }
+  .hidden { display: none; }
+  .encouragement { font-size: 28px; color: #f39c12; text-align: center; margin-top: 10px; font-weight: bold; animation: bounce 0.6s; }
+  .certificate { background: linear-gradient(135deg, #fff9e6 0%, #fff 100%); border: 8px solid #667eea; border-radius: 20px; padding: 40px; margin: 20px 0; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+  .certificate h2 { color: #667eea; font-size: 36px; margin-bottom: 20px; text-transform: uppercase; }
+  .certificate-text { font-size: 20px; margin: 15px 0; color: #333; }
+  .certificate-stats { font-size: 22px; margin: 15px 0; color: #555; }
+  .certificate-date { font-size: 18px; color: #777; margin-top: 30px; font-style: italic; }
+  .input-name { padding: 12px 20px; font-size: 18px; border: 3px solid #667eea; border-radius: 10px; margin: 10px; width: 300px; text-align: center; }
+  .progress-bar { width: 100%; height: 30px; background: #e0e0e0; border-radius: 15px; overflow: hidden; margin: 15px 0; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.5s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎹 Интервалы и аккорды</h1>
+  <div class="subtitle">Тренируй слух играючи!</div>
+  
+  <div id="game-section">
+    <div class="score-board">
+      <div class="level-info">Уровень: <span id="current-level">1</span></div>
+      <div style="margin: 10px 0;">✅ Правильно: <span id="correct-count">0</span> | ❌ Неправильно: <span id="wrong-count">0</span></div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"><span id="progress-text">0/10</span></div>
+      </div>
+      <div id="encouragement" class="encouragement" style="display:none;"></div>
+    </div>
+    
+    <div class="basket">
+      <div class="basket-title">🏆 Пройденные уровни:</div>
+      <div class="balls-container" id="balls-container"></div>
+    </div>
+    
+    <div class="controls">
+      <button class="btn btn-full" onclick="playInterval()">🎵 Сыграть интервал/аккорд</button>
+      <button class="btn btn-reset" onclick="resetInterval()">🔄 Новый</button>
+    </div>
+    
+    <div class="feedback" id="interval-feedback">Нажмите "Сыграть интервал/аккорд" и определите, что вы услышали</div>
+    
+    <div class="zone">
+      <div class="zone-title">Выберите правильный ответ</div>
+      <div class="interval-options" id="interval-options"></div>
+    </div>
+    
+    <div class="hint">💡 Слушайте и определяйте интервалы и аккорды. Все варианты показаны ниже</div>
+    
+    <button class="btn btn-next-level" id="btn-next-level" onclick="nextLevel()">🚀 Перейти на следующий уровень</button>
+  </div>
+  
+  <div id="certificate-section" class="hidden">
+    <div class="certificate">
+      <h2>🎖️ СЕРТИФИКАТ 🎖️</h2>
+      <div class="certificate-text">Настоящим удостоверяется, что</div>
+      <input type="text" class="input-name" id="student-name" placeholder="Введите имя и фамилию">
+      <div class="certificate-text">успешно завершил(а) 3 уровня тренировки интервалов и аккордов</div>
+      <div class="certificate-stats">
+        ✅ Правильных ответов: <span id="cert-correct">0</span><br>
+        ❌ Неправильных ответов: <span id="cert-wrong">0</span><br>
+        🎯 Точность: <span id="cert-accuracy">0</span>%
+      </div>
+      <div class="certificate-date" id="certificate-date"></div>
+      <button class="btn" style="background: linear-gradient(135deg, #2ecc71, #27ae60); margin-top: 20px;" onclick="window.print()">🖨️ Распечатать сертификат</button>
+      <button class="btn btn-reset" onclick="startNewGame()" style="margin-top: 20px;">🔄 Начать новую игру</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentLevel = 1, tasksCompleted = 0, tasksInLevel = 10, correctCount = 0, wrongCount = 0, completedLevels = [];
+const encouragements = ['🎉 Молодец!', '⭐ Отлично!', '👏 Браво!', '🌟 Превосходно!', '💫 Супер!', '🎯 Так держать!'];
+const INTERVALS = [
+  {name: 'Прима', src: 'audio/interval_prime.mp3'}, {name: 'Малая секунда', src: 'audio/interval_minor2.mp3'},
+  {name: 'Большая секунда', src: 'audio/interval_major2.mp3'}, {name: 'Малая терция', src: 'audio/interval_minor3.mp3'},
+  {name: 'Большая терция', src: 'audio/interval_major3.mp3'}, {name: 'Чистая кварта', src: 'audio/interval_perfect4.mp3'},
+  {name: 'Чистая квинта', src: 'audio/interval_perfect5.mp3'}, {name: 'Чистая октава', src: 'audio/interval_perfect8.mp3'},
+  {name: 'Мажорное трезвучие (Б53)', src: 'audio/chord_major.mp3'}, {name: 'Минорное трезвучие (м53)', src: 'audio/chord_minor.mp3'}
+];
+let currentInterval = null, intervalAudio = null, isIntervalPlaying = false;
+
+function updateScore(isCorrect) {
+  if (isCorrect) {
+    correctCount++; tasksCompleted++;
+    document.getElementById('correct-count').textContent = correctCount;
+    const progress = (tasksCompleted % tasksInLevel) || tasksInLevel;
+    document.getElementById('progress-fill').style.width = (progress / tasksInLevel) * 100 + '%';
+    document.getElementById('progress-text').textContent = progress + '/' + tasksInLevel;
+    const encEl = document.getElementById('encouragement');
+    encEl.textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
+    encEl.style.display = 'block';
+    setTimeout(() => { encEl.style.display = 'none'; }, 2000);
+    if (tasksCompleted % tasksInLevel === 0) completeLevel();
+  } else {
+    wrongCount++;
+    document.getElementById('wrong-count').textContent = wrongCount;
+  }
+}
+
+function completeLevel() {
+  completedLevels.push(currentLevel);
+  const ball = document.createElement('div');
+  ball.className = 'ball'; ball.textContent = currentLevel;
+  document.getElementById('balls-container').appendChild(ball);
+  if (completedLevels.length >= 3) setTimeout(showCertificate, 1000);
+  else {
+    document.getElementById('btn-next-level').style.display = 'inline-block';
+    document.getElementById('btn-next-level').textContent = '🚀 Перейти на уровень ' + (currentLevel + 1);
+  }
+}
+
+function nextLevel() {
+  currentLevel++;
+  document.getElementById('current-level').textContent = currentLevel;
+  document.getElementById('btn-next-level').style.display = 'none';
+  tasksCompleted = 0;
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-text').textContent = '0/' + tasksInLevel;
+  resetInterval();
+}
+
+function showCertificate() {
+  const accuracy = correctCount > 0 ? Math.round((correctCount / (correctCount + wrongCount)) * 100) : 0;
+  document.getElementById('cert-correct').textContent = correctCount;
+  document.getElementById('cert-wrong').textContent = wrongCount;
+  document.getElementById('cert-accuracy').textContent = accuracy;
+  const now = new Date();
+  document.getElementById('certificate-date').textContent = now.toLocaleDateString('ru-RU') + ' ' + now.toLocaleTimeString('ru-RU');
+  document.getElementById('game-section').classList.add('hidden');
+  document.getElementById('certificate-section').classList.remove('hidden');
+}
+
+function startNewGame() {
+  currentLevel = 1; tasksCompleted = 0; correctCount = 0; wrongCount = 0; completedLevels = [];
+  document.getElementById('current-level').textContent = '1';
+  document.getElementById('correct-count').textContent = '0';
+  document.getElementById('wrong-count').textContent = '0';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-text').textContent = '0/' + tasksInLevel;
+  document.getElementById('balls-container').innerHTML = '';
+  document.getElementById('certificate-section').classList.add('hidden');
+  document.getElementById('game-section').classList.remove('hidden');
+  initIntervals();
+}
+
+function initIntervals() {
+  const optionsContainer = document.getElementById('interval-options');
+  optionsContainer.innerHTML = '';
+  currentInterval = INTERVALS[Math.floor(Math.random() * INTERVALS.length)];
+  let options = [currentInterval];
+  let wrongIntervals = INTERVALS.filter(i => i.name !== currentInterval.name);
+  wrongIntervals = wrongIntervals.sort(() => Math.random() - 0.5).slice(0, Math.floor(Math.random() * 3) + 3);
+  options = options.concat(wrongIntervals).sort(() => Math.random() - 0.5);
+  options.forEach(interval => {
+    const btn = document.createElement('button');
+    btn.className = 'interval-btn'; btn.textContent = interval.name;
+    btn.onclick = () => checkInterval(interval, btn);
+    optionsContainer.appendChild(btn);
+  });
+  setTimeout(() => playInterval(), 1000);
+}
+
+function playInterval() {
+  if (isIntervalPlaying) return;
+  isIntervalPlaying = true;
+  if (intervalAudio) intervalAudio.pause();
+  intervalAudio = new Audio(currentInterval.src); intervalAudio.volume = 0.8;
+  document.getElementById('interval-feedback').textContent = '🎵 Слушайте...';
+  document.getElementById('interval-feedback').className = 'feedback';
+  document.querySelectorAll('.interval-btn').forEach(btn => btn.classList.remove('correct', 'wrong'));
+  intervalAudio.onended = () => {
+    isIntervalPlaying = false;
+    document.getElementById('interval-feedback').textContent = 'Что это было?';
+    document.getElementById('interval-feedback').className = 'feedback info';
+  };
+  intervalAudio.onerror = () => {
+    isIntervalPlaying = false;
+    document.getElementById('interval-feedback').textContent = '⚠️ Файл не найден! Проверьте папку audio/';
+    document.getElementById('interval-feedback').className = 'feedback error';
+  };
+  intervalAudio.play().catch(e => {
+    isIntervalPlaying = false;
+    document.getElementById('interval-feedback').textContent = '⚠️ Кликните по странице, затем попробуйте снова';
+    document.getElementById('interval-feedback').className = 'feedback error';
+  });
+}
+
+function checkInterval(interval, btn) {
+  if (!currentInterval) {
+    document.getElementById('interval-feedback').textContent = '⚠️ Сначала дождитесь воспроизведения!';
+    document.getElementById('interval-feedback').className = 'feedback error'; return;
+  }
+  if (interval.name === currentInterval.name) {
+    btn.classList.add('correct');
+    document.getElementById('interval-feedback').textContent = '🎉 Правильно! Это ' + currentInterval.name;
+    document.getElementById('interval-feedback').className = 'feedback success';
+    updateScore(true);
+    setTimeout(resetInterval, 2000);
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('interval-feedback').textContent = '❌ Неправильно. Правильный ответ: ' + currentInterval.name;
+    document.getElementById('interval-feedback').className = 'feedback error';
+    updateScore(false);
+    document.querySelectorAll('.interval-btn').forEach(b => {
+      if (b.textContent === currentInterval.name) b.classList.add('correct');
+    });
+    setTimeout(resetInterval, 3000);
+  }
+}
+
+function resetInterval() {
+  if (intervalAudio) { intervalAudio.pause(); intervalAudio = null; }
+  isIntervalPlaying = false; currentInterval = null;
+  document.getElementById('interval-feedback').textContent = 'Нажмите "Сыграть интервал/аккорд" и определите, что вы услышали';
+  document.getElementById('interval-feedback').className = 'feedback';
+  initIntervals();
+}
+
+window.onload = initIntervals;
+</script>
+</body>
+</html>
