@@ -108,11 +108,16 @@
 let currentLevel = 1, tasksCompleted = 0, tasksInLevel = 10, correctCount = 0, wrongCount = 0, completedLevels = [];
 const encouragements = ['🎉 Молодец!', '⭐ Отлично!', '👏 Браво!', '🌟 Превосходно!', '💫 Супер!', '🎯 Так держать!'];
 const INTERVALS = [
-  {name: 'Прима', src: 'audio/interval_prime.mp3'}, {name: 'Малая секунда', src: 'audio/interval_minor2.mp3'},
-  {name: 'Большая секунда', src: 'audio/interval_major2.mp3'}, {name: 'Малая терция', src: 'audio/interval_minor3.mp3'},
-  {name: 'Большая терция', src: 'audio/interval_major3.mp3'}, {name: 'Чистая кварта', src: 'audio/interval_perfect4.mp3'},
-  {name: 'Чистая квинта', src: 'audio/interval_perfect5.mp3'}, {name: 'Чистая октава', src: 'audio/interval_perfect8.mp3'},
-  {name: 'Мажорное трезвучие (Б53)', src: 'audio/chord_major.mp3'}, {name: 'Минорное трезвучие (м53)', src: 'audio/chord_minor.mp3'}
+  {name: 'Прима', src: 'interval_prime.mp3'},
+  {name: 'Малая секунда', src: 'interval_minor2.mp3'},
+  {name: 'Большая секунда', src: 'interval_major2.mp3'},
+  {name: 'Малая терция', src: 'interval_minor3.mp3'},
+  {name: 'Большая терция', src: 'interval_major3.mp3'},
+  {name: 'Чистая кварта', src: 'interval_perfect4.mp3'},
+  {name: 'Чистая квинта', src: 'interval_perfect5.mp3'},
+  {name: 'Чистая октава', src: 'interval_perfect8.mp3'},
+  {name: 'Мажорное трезвучие (Б53)', src: 'chord_major.mp3'},
+  {name: 'Минорное трезвучие (м53)', src: 'chord_minor.mp3'}
 ];
 let currentInterval = null, intervalAudio = null, isIntervalPlaying = false;
 
@@ -212,7 +217,7 @@ function playInterval() {
   };
   intervalAudio.onerror = () => {
     isIntervalPlaying = false;
-    document.getElementById('interval-feedback').textContent = '⚠️ Файл не найден! Проверьте папку audio/';
+    document.getElementById('interval-feedback').textContent = '⚠️ Файл не найден!';
     document.getElementById('interval-feedback').className = 'feedback error';
   };
   intervalAudio.play().catch(e => {
