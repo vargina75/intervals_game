@@ -163,6 +163,10 @@ function nextLevel() {
 }
 
 function showCertificate() {
+  // ИСПРАВЛЕНИЕ 1: Выключаем звук при открытии сертификата
+  if (intervalAudio) { intervalAudio.pause(); intervalAudio = null; }
+  isIntervalPlaying = false;
+  
   const accuracy = correctCount > 0 ? Math.round((correctCount / (correctCount + wrongCount)) * 100) : 0;
   document.getElementById('cert-correct').textContent = correctCount;
   document.getElementById('cert-wrong').textContent = wrongCount;
