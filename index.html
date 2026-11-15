@@ -30,6 +30,7 @@
   .interval-btn:hover { background: #667eea; color: white; transform: scale(1.05); }
   .interval-btn.correct { background: #2ecc71; border-color: #27ae60; color: white; animation: correctPulse 0.6s; }
   .interval-btn.wrong { background: #e74c3c; border-color: #c0392b; color: white; animation: shake 0.5s; }
+  .interval-btn.locked { pointer-events: none; opacity: 0.6; cursor: default; }
   @keyframes correctPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
   @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
   .feedback { text-align: center; font-size: 24px; font-weight: bold; padding: 20px; margin: 25px 0; border-radius: 15px; min-height: 60px; display: flex; align-items: center; justify-content: center; }
@@ -119,7 +120,7 @@ const INTERVALS = [
   {name: 'Мажорное трезвучие (Б53)', src: 'chord_major.mp3'},
   {name: 'Минорное трезвучие (м53)', src: 'chord_minor.mp3'}
 ];
-let currentInterval = null, intervalAudio = null, isIntervalPlaying = false;
+let currentInterval = null, intervalAudio = null, isIntervalPlaying = false, isAnswered = false;
 
 function updateScore(isCorrect) {
   if (isCorrect) {
@@ -186,6 +187,7 @@ function startNewGame() {
 }
 
 function initIntervals() {
+  isAnswered = false;
   const optionsContainer = document.getElementById('interval-options');
   optionsContainer.innerHTML = '';
   currentInterval = INTERVALS[Math.floor(Math.random() * INTERVALS.length)];
@@ -227,11 +229,18 @@ function playInterval() {
   });
 }
 
+function lockAllButtons() {
+  document.querySelectorAll('.interval-btn').forEach(btn => btn.classList.add('locked'));
+}
+
 function checkInterval(interval, btn) {
+  if (isAnswered) return;
   if (!currentInterval) {
     document.getElementById('interval-feedback').textContent = '⚠️ Сначала дождитесь воспроизведения!';
     document.getElementById('interval-feedback').className = 'feedback error'; return;
   }
+  isAnswered = true;
+  lockAllButtons();
   if (interval.name === currentInterval.name) {
     btn.classList.add('correct');
     document.getElementById('interval-feedback').textContent = '🎉 Правильно! Это ' + currentInterval.name;
@@ -252,7 +261,7 @@ function checkInterval(interval, btn) {
 
 function resetInterval() {
   if (intervalAudio) { intervalAudio.pause(); intervalAudio = null; }
-  isIntervalPlaying = false; currentInterval = null;
+  isIntervalPlaying = false; currentInterval = null; isAnswered = false;
   document.getElementById('interval-feedback').textContent = 'Нажмите "Сыграть интервал/аккорд" и определите, что вы услышали';
   document.getElementById('interval-feedback').className = 'feedback';
   initIntervals();
