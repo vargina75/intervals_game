@@ -120,9 +120,11 @@ const INTERVALS = [
   {name: 'Мажорное трезвучие (Б53)', src: 'chord_major.mp3'},
   {name: 'Минорное трезвучие (м53)', src: 'chord_minor.mp3'}
 ];
-let currentInterval = null, intervalAudio = null, isIntervalPlaying = false, isAnswered = false;
+let currentInterval = null, intervalAudio = null, isIntervalPlaying = false, isAnswered = false, levelCompleted = false;
 
 function updateScore(isCorrect) {
+  if (levelCompleted) return;
+  
   if (isCorrect) {
     correctCount++; tasksCompleted++;
     document.getElementById('correct-count').textContent = correctCount;
@@ -141,6 +143,7 @@ function updateScore(isCorrect) {
 }
 
 function completeLevel() {
+  levelCompleted = true;
   completedLevels.push(currentLevel);
   const ball = document.createElement('div');
   ball.className = 'ball'; ball.textContent = currentLevel;
@@ -154,16 +157,16 @@ function completeLevel() {
 
 function nextLevel() {
   currentLevel++;
+  levelCompleted = false;
+  tasksCompleted = 0;
   document.getElementById('current-level').textContent = currentLevel;
   document.getElementById('btn-next-level').style.display = 'none';
-  tasksCompleted = 0;
   document.getElementById('progress-fill').style.width = '0%';
   document.getElementById('progress-text').textContent = '0/' + tasksInLevel;
   resetInterval();
 }
 
 function showCertificate() {
-  // ИСПРАВЛЕНИЕ 1: Выключаем звук при открытии сертификата
   if (intervalAudio) { intervalAudio.pause(); intervalAudio = null; }
   isIntervalPlaying = false;
   
@@ -178,7 +181,7 @@ function showCertificate() {
 }
 
 function startNewGame() {
-  currentLevel = 1; tasksCompleted = 0; correctCount = 0; wrongCount = 0; completedLevels = [];
+  currentLevel = 1; tasksCompleted = 0; correctCount = 0; wrongCount = 0; completedLevels = []; levelCompleted = false;
   document.getElementById('current-level').textContent = '1';
   document.getElementById('correct-count').textContent = '0';
   document.getElementById('wrong-count').textContent = '0';
