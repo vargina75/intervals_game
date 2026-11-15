@@ -20,9 +20,9 @@
   .controls { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 25px 0; }
   .btn { padding: 15px 30px; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; color: white; transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
   .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   .btn-full { background: linear-gradient(135deg, #667eea, #764ba2); }
   .btn-reset { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
-  .btn-next-level { background: linear-gradient(135deg, #2ecc71, #27ae60); margin-top: 15px; display: none; }
   .zone { background: #f8f9fa; border: 3px dashed #ddd; border-radius: 15px; padding: 25px; margin: 25px 0; min-height: 140px; }
   .zone-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #667eea; }
   .interval-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
@@ -37,6 +37,8 @@
   .feedback.success { background: linear-gradient(135deg, #d4edda, #c3e6cb); color: #155724; border: 3px solid #28a745; }
   .feedback.error { background: linear-gradient(135deg, #f8d7da, #f5c6cb); color: #721c24; border: 3px solid #dc3545; }
   .feedback.info { background: rgba(102, 126, 234, 0.1); color: #667eea; border: 2px solid #667eea; }
+  .feedback.level-up { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); color: #d63031; border: 3px solid #e17055; font-size: 28px; animation: levelUpPulse 1s; }
+  @keyframes levelUpPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
   .hint { text-align: center; color: #666; font-size: 16px; margin-top: 10px; font-style: italic; }
   .hidden { display: none; }
   .encouragement { font-size: 28px; color: #f39c12; text-align: center; margin-top: 10px; font-weight: bold; animation: bounce 0.6s; }
@@ -71,8 +73,8 @@
     </div>
     
     <div class="controls">
-      <button class="btn btn-full" onclick="playInterval()">🎵 Сыграть интервал/аккорд</button>
-      <button class="btn btn-reset" onclick="resetInterval()">🔄 Новый</button>
+      <button class="btn btn-full" id="btn-play" onclick="playInterval()">🎵 Сыграть интервал/аккорд</button>
+      <button class="btn btn-reset" id="btn-new" onclick="resetInterval()">🔄 Новый</button>
     </div>
     
     <div class="feedback" id="interval-feedback">Нажмите "Сыграть интервал/аккорд" и определите, что вы услышали</div>
@@ -83,8 +85,6 @@
     </div>
     
     <div class="hint">💡 Слушайте и определяйте интервалы и аккорды. Все варианты показаны ниже</div>
-    
-    <button class="btn btn-next-level" id="btn-next-level" onclick="nextLevel()">🚀 Перейти на следующий уровень</button>
   </div>
   
   <div id="certificate-section" class="hidden">
@@ -120,10 +120,29 @@ const INTERVALS = [
   {name: 'Мажорное трезвучие (Б53)', src: 'chord_major.mp3'},
   {name: 'Минорное трезвучие (м53)', src: 'chord_minor.mp3'}
 ];
-let currentInterval = null, intervalAudio = null, isIntervalPlaying = false, isAnswered = false, levelCompleted = false;
+let currentInterval = null, intervalAudio = null, isIntervalPlaying = false, isAnswered = false;
+let gameTimer = null; // таймер для автоперехода
+let gameFinished = false; // флаг завершения игры (сертификат)
+
+function stopAllAudio() {
+  if (intervalAudio) { intervalAudio.pause(); intervalAudio = null; }
+  isIntervalPlaying = false;
+  if (gameTimer) { clearTimeout(gameTimer); gameTimer = null; }
+}
+
+function lockControls() {
+  document.getElementById('btn-play').disabled = true;
+  document.getElementById('btn-new').disabled = true;
+  document.querySelectorAll('.interval-btn').forEach(btn => btn.classList.add('locked'));
+}
+
+function unlockControls() {
+  document.getElementById('btn-play').disabled = false;
+  document.getElementById('btn-new').disabled = false;
+}
 
 function updateScore(isCorrect) {
-  if (levelCompleted) return;
+  if (gameFinished) return;
   
   if (isCorrect) {
     correctCount++; tasksCompleted++;
@@ -143,32 +162,41 @@ function updateScore(isCorrect) {
 }
 
 function completeLevel() {
-  levelCompleted = true;
   completedLevels.push(currentLevel);
   const ball = document.createElement('div');
   ball.className = 'ball'; ball.textContent = currentLevel;
   document.getElementById('balls-container').appendChild(ball);
-  if (completedLevels.length >= 3) setTimeout(showCertificate, 1000);
-  else {
-    document.getElementById('btn-next-level').style.display = 'inline-block';
-    document.getElementById('btn-next-level').textContent = '🚀 Перейти на уровень ' + (currentLevel + 1);
+  
+  if (completedLevels.length >= 3) {
+    gameTimer = setTimeout(showCertificate, 2000);
+  } else {
+    // Показываем уведомление об окончании уровня
+    const fb = document.getElementById('interval-feedback');
+    fb.textContent = '🎉 Уровень ' + currentLevel + ' пройден! Переход на уровень ' + (currentLevel + 1) + ' через 3 секунды...';
+    fb.className = 'feedback level-up';
+    lockControls();
+    stopAllAudio();
+    gameTimer = setTimeout(nextLevel, 3000);
   }
 }
 
 function nextLevel() {
+  if (gameTimer) { clearTimeout(gameTimer); gameTimer = null; }
   currentLevel++;
-  levelCompleted = false;
-  tasksCompleted = 0;
   document.getElementById('current-level').textContent = currentLevel;
-  document.getElementById('btn-next-level').style.display = 'none';
+  tasksCompleted = 0;
   document.getElementById('progress-fill').style.width = '0%';
   document.getElementById('progress-text').textContent = '0/' + tasksInLevel;
-  resetInterval();
+  document.getElementById('interval-feedback').textContent = 'Нажмите "Сыграть интервал/аккорд" и определите, что вы услышали';
+  document.getElementById('interval-feedback').className = 'feedback';
+  unlockControls();
+  initIntervals();
 }
 
 function showCertificate() {
-  if (intervalAudio) { intervalAudio.pause(); intervalAudio = null; }
-  isIntervalPlaying = false;
+  gameFinished = true;
+  stopAllAudio();
+  lockControls();
   
   const accuracy = correctCount > 0 ? Math.round((correctCount / (correctCount + wrongCount)) * 100) : 0;
   document.getElementById('cert-correct').textContent = correctCount;
@@ -181,7 +209,9 @@ function showCertificate() {
 }
 
 function startNewGame() {
-  currentLevel = 1; tasksCompleted = 0; correctCount = 0; wrongCount = 0; completedLevels = []; levelCompleted = false;
+  gameFinished = false;
+  stopAllAudio();
+  currentLevel = 1; tasksCompleted = 0; correctCount = 0; wrongCount = 0; completedLevels = [];
   document.getElementById('current-level').textContent = '1';
   document.getElementById('correct-count').textContent = '0';
   document.getElementById('wrong-count').textContent = '0';
@@ -190,10 +220,12 @@ function startNewGame() {
   document.getElementById('balls-container').innerHTML = '';
   document.getElementById('certificate-section').classList.add('hidden');
   document.getElementById('game-section').classList.remove('hidden');
+  unlockControls();
   initIntervals();
 }
 
 function initIntervals() {
+  if (gameFinished) return;
   isAnswered = false;
   const optionsContainer = document.getElementById('interval-options');
   optionsContainer.innerHTML = '';
@@ -212,7 +244,7 @@ function initIntervals() {
 }
 
 function playInterval() {
-  if (isIntervalPlaying) return;
+  if (gameFinished || isIntervalPlaying) return;
   isIntervalPlaying = true;
   if (intervalAudio) intervalAudio.pause();
   intervalAudio = new Audio(currentInterval.src); intervalAudio.volume = 0.8;
@@ -241,7 +273,7 @@ function lockAllButtons() {
 }
 
 function checkInterval(interval, btn) {
-  if (isAnswered) return;
+  if (gameFinished || isAnswered) return;
   if (!currentInterval) {
     document.getElementById('interval-feedback').textContent = '⚠️ Сначала дождитесь воспроизведения!';
     document.getElementById('interval-feedback').className = 'feedback error'; return;
@@ -253,7 +285,7 @@ function checkInterval(interval, btn) {
     document.getElementById('interval-feedback').textContent = '🎉 Правильно! Это ' + currentInterval.name;
     document.getElementById('interval-feedback').className = 'feedback success';
     updateScore(true);
-    setTimeout(resetInterval, 2000);
+    gameTimer = setTimeout(resetInterval, 2000);
   } else {
     btn.classList.add('wrong');
     document.getElementById('interval-feedback').textContent = '❌ Неправильно. Правильный ответ: ' + currentInterval.name;
@@ -262,13 +294,15 @@ function checkInterval(interval, btn) {
     document.querySelectorAll('.interval-btn').forEach(b => {
       if (b.textContent === currentInterval.name) b.classList.add('correct');
     });
-    setTimeout(resetInterval, 3000);
+    gameTimer = setTimeout(resetInterval, 3000);
   }
 }
 
 function resetInterval() {
-  if (intervalAudio) { intervalAudio.pause(); intervalAudio = null; }
-  isIntervalPlaying = false; currentInterval = null; isAnswered = false;
+  if (gameTimer) { clearTimeout(gameTimer); gameTimer = null; }
+  if (gameFinished) return;
+  stopAllAudio();
+  isAnswered = false;
   document.getElementById('interval-feedback').textContent = 'Нажмите "Сыграть интервал/аккорд" и определите, что вы услышали';
   document.getElementById('interval-feedback').className = 'feedback';
   initIntervals();
